@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.codepath.asynchttpclient.AsyncHttpClient;
@@ -14,18 +15,20 @@ import com.codepath.debuggingchallenges.models.Movie;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import okhttp3.Headers;
 
 public class MoviesActivity extends AppCompatActivity {
 
-    private static final String API_KEY = "a07e22bc18f5cb106bfe4cc1f83ad8ed";
+    public static final String NOW_PLAYING_URL = "https://api.themoviedb.org/3/movie/now_playing?api_key=69c6760b3c91ff75f8ed944213810297";
 
     RecyclerView rvMovies;
     MoviesAdapter adapter;
-    ArrayList<Movie> movies;
+    List<Movie> movies;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,25 +36,31 @@ public class MoviesActivity extends AppCompatActivity {
         setContentView(R.layout.activity_movies);
         rvMovies = findViewById(R.id.rvMovies);
 
+        movies = new ArrayList<>();
+
         // Create the adapter to convert the array to views
-        MoviesAdapter adapter = new MoviesAdapter(movies);
+        adapter = new MoviesAdapter(movies);
 
         // Attach the adapter to a ListView
         rvMovies.setAdapter(adapter);
+        rvMovies.setLayoutManager(new LinearLayoutManager(this));
 
         fetchMovies();
     }
 
 
     private void fetchMovies() {
-        String url = " https://api.themoviedb.org/3/movie/now_playing?api_key=";
         AsyncHttpClient client = new AsyncHttpClient();
-        client.get(url, null, new JsonHttpResponseHandler() {
+        client.get(NOW_PLAYING_URL, new JsonHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Headers headers, JSON response) {
+                JSONObject jsonObject = response.jsonObject;
                 try {
-                    JSONArray moviesJson = response.jsonObject.getJSONArray("results");
-                    movies = Movie.fromJSONArray(moviesJson);
+                    JSONArray moviesJson = jsonObject.getJSONArray("results");
+                    Log.i("MoviesActivity1", "Results:" + moviesJson.toString());
+                    movies.addAll(Movie.fromJSONArray(moviesJson));
+                    Log.i("MoviesActivity1", "Movies size:" + movies.size());
+                    adapter.notifyDataSetChanged();
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
